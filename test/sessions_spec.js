@@ -36,16 +36,12 @@ frisby.globalSetup({
 frisby.create("POST " + path + " with valid JSON body should return 201")
 	.post(request, example_json, {json: true})
 	.timeout(10000)
-	.expectJSON({
-		"status": 201
-	})
+	.expectStatus(201)
 	.afterJSON(function(json){
 		frisby.create("And GET " + path + "/{sessionID} with the newly created session should return 200")
 			.get(request + "/" + json.entity.id)
 			.timeout(10000)
-			.expectJSON({
-				"status": 200
-			})
+			.expectStatus(200)
 			.toss();
 	})
 	.toss();
@@ -53,23 +49,17 @@ frisby.create("POST " + path + " with valid JSON body should return 201")
 frisby.create("POST " + path + " with empty JSON array should return 400")
 	.post(request, [], {json: true})
 	.timeout(10000)
-	.expectJSON({
-		"status": 400
-	})
+	.expectStatus(400)
 	.toss();
 
 frisby.create("POST " + path + " with empty JSON object should return 400")
 	.post(request, {}, {json: true})
 	.timeout(10000)
-	.expectJSON({
-		"status": 400
-	})
+	.expectStatus(400)
 	.toss();
 
 frisby.create("GET " + path + "/{sessionID} with invalid session ID should return 404")
 	.get(request + "/" + invalid_id)
 	.timeout(10000)
-	.expectJSON({
-		"status": 404
-	})
+	.expectStatus(404)
 	.toss();

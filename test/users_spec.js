@@ -34,39 +34,29 @@ frisby.globalSetup({
 frisby.create("POST " + path + " with example user should return 201")
 	.post(request, example_user, {json: true})
 	.timeout(10000)
-	.expectJSON({
-		"status": 201
-	})
+	.expectStatus(201)
 	.toss();
 
 frisby.create("POST " + path + " with empty JSON object should return 400")
 	.post(request, {}, {json: true})
 	.timeout(10000)
-	.expectJSON({
-		"status": 400
-	})
+	.expectStatus(400)
 	.toss();
 
 frisby.create("POST " + path + " with empty JSON array should return 400")
 	.post(request, [], {json: true})
 	.timeout(10000)
-	.expectJSON({
-		"status": 400
-	})
+	.expectStatus(400)
 	.toss();
 
 frisby.create("GET " + path + "/{username} with existing user should return 200")
 	.get(request + "/" + existing_username)
 	.timeout(10000)
-	.expectJSON({
-		"status": 200
-	})
+	.expectStatus(200)
 	.toss();
 
 frisby.create("GET " + path + "/[username} with non-existing user should return 404")
 	.get(request + "/" + nonexistent_username)
 	.timeout(10000)
-	.expectJSON({
-		"status": 404
-	})
+	.expectStatus(404)
 	.toss();
