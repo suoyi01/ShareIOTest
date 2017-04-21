@@ -9,6 +9,8 @@
   "author": "Yi Suo",
   "license": "ISC",
   "dependencies": {
-    "frisby": "^0.8.5"
+    "async": "^2.3.0",
+    "frisby": "^0.8.5",
+    "randomstring": "^1.1.5"
   }
 }
