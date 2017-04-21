@@ -19,6 +19,7 @@ var additional = randomstring.generate();
 var additionalpw = randomstring.generate();
 
 var session_id = null;
+var state_id = null;
 var other_removed, self_removed, added;
 
 other_removed = [presenter];
@@ -27,7 +28,16 @@ self_removed = [participant];
 
 added = [additional];
 
+var sample_state = {
+    "user": {
+        "test": "test"
+    }
+};
+
+var patch= [ { "op": "replace", "path": "/user/test", "value": "test1" }, ];
+
 frisby.globalSetup({
+
     request: {
         headers: {
             'Content-Type': 'application/json',
@@ -205,7 +215,7 @@ async.series([
     function(done) {
         var path = "/storage/sessions";
         var request = url + ":" + port.toString() + path;
-        frisby.create("PUT" + path + "/{session_id}/participants adding users as presenter should return 403")
+        frisby.create("PUT" + path + "/{session_id}/participants adding participants as presenter should return 403")
             .put(request + "/" + session_id + "/participants", added, {json: true})
             .timeout(10000)
             .expectStatus(403)
@@ -229,7 +239,7 @@ async.series([
     function(done){
         var path = "/storage/sessions";
         var request = url + ":" + port.toString() + path;
-        frisby.create("PUT" + path + "/{session_id}/presenters adding users presenters as presenter should return 403")
+        frisby.create("PUT" + path + "/{session_id}/presenters adding presenters as presenter should return 403")
             .put(request + "/" + session_id + "/presenters", added, {json: true})
             .timeout(10000)
             .expectStatus(403)
@@ -239,6 +249,18 @@ async.series([
             .toss();
     },
     function(done){
+        var auth = "Basic " + new Buffer(presenter + ":" + presenterpw).toString("base64");
+
+        frisby.globalSetup({
+            request: {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': auth
+                },
+                inspectOnFailure: true
+            }
+        });
         var path = "/storage/sessions";
         var request = url + ":" + port.toString() + path;
         frisby.create("PUT" + path + "/{session_id}/presenters removing himself as presenter should return 200")
@@ -251,6 +273,18 @@ async.series([
             .toss();
     },
     function(done) {
+        var auth = "Basic " + new Buffer(presenter + ":" + presenterpw).toString("base64");
+
+        frisby.globalSetup({
+            request: {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': auth
+                },
+                inspectOnFailure: true
+            }
+        });
         var path = "/storage/sessions";
         var request = url + ":" + port.toString() + path;
         frisby.create("PUT" + path + "/{session_id}/participants removing himself as presenter should return 200")
@@ -261,5 +295,371 @@ async.series([
                 done();
             })
             .toss();
+    },
+    function(done){
+        var auth = "Basic " + new Buffer(admin + ":" + adminpw).toString("base64");
+
+        frisby.globalSetup({
+            request: {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': auth
+                },
+                inspectOnFailure: true
+            }
+        });
+        setParticipantsAndPresenters([participant, presenter], [participant, presenter], done);
+    },
+    function(done) {
+        var auth = "Basic " + new Buffer(presenter + ":" + presenterpw).toString("base64");
+
+        frisby.globalSetup({
+            request: {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': auth
+                },
+                inspectOnFailure: true
+            }
+        });
+        callStatesAPIForPresenters(done);
+    },
+    function(done){
+        var auth = "Basic " + new Buffer(admin + ":" + adminpw).toString("base64");
+
+        frisby.globalSetup({
+            request: {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': auth
+                },
+                inspectOnFailure: true
+            }
+        });
+        setParticipantsAndPresenters([participant, presenter], [], done);
+    },
+    function(done){
+        var auth = "Basic " + new Buffer(presenter + ":" + presenterpw).toString("base64");
+
+        frisby.globalSetup({
+            request: {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': auth
+                },
+                inspectOnFailure: true
+            }
+        });
+        callStatesAPIForParticipants(done);
+    },
+    function(done){
+        var auth = "Basic " + new Buffer(admin + ":" + adminpw).toString("base64");
+
+        frisby.globalSetup({
+            request: {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': auth
+                },
+                inspectOnFailure: true
+            }
+        });
+        setParticipantsAndPresenters([], [], done);
+    },
+    function(done){
+        var auth = "Basic " + new Buffer(presenter + ":" + presenterpw).toString("base64");
+
+        frisby.globalSetup({
+            request: {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': auth
+                },
+                inspectOnFailure: true
+            }
+        });
+        callStatesAPIForNonParticipants(done);
+    },
+    function(done){
+        var adminauth = "Basic " + new Buffer(admin + ":" + adminpw).toString("base64");
+
+        var example_session = {
+            "admin": admin,
+            "dataset": [
+                "test"
+            ],
+            "id": "test",
+            "name": "test",
+            "participants": [
+            ],
+            "presenters": [
+            ]
+        };
+
+        frisby.globalSetup({
+            request: {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': adminauth
+                },
+                inspectOnFailure: true
+            }
+        });
+
+        var path = "/storage/sessions";
+        var request = url + ":" + port.toString() + path;
+        frisby.create("POST " + path + " with valid JSON body as admin should return 201")
+            .post(request, example_session, {json: true})
+            .addHeader("Authorization", adminauth)
+            .timeout(10000)
+            .expectStatus(201)
+            .afterJSON(function(json) {
+                session_id = json.entity.id;
+                done();
+            })
+            .toss();
+    },
+    function(done){
+        var path = "/storage/sessions";
+        var request = url + ":" + port.toString() + path;
+        frisby.create("PUT " + path + "/{sessionID}/presenters with a user added only to presenters should return 400")
+            .put(request + "/" + session_id + "/presenters", [participant], {json: true})
+            .timeout(10000)
+            .expectStatus(400)
+            .after(function(err, res, body){
+                var auth = "Basic " + new Buffer(participant+ ":" + participantpw).toString("base64");
+
+                frisby.globalSetup({
+                    request: {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'Authorization': auth
+                        },
+                        inspectOnFailure: true
+                    }
+                });
+                callStatesAPIForNonParticipants(done);
+            })
+            .toss();
+    },
+    function(done){
+        var adminauth = "Basic " + new Buffer(admin + ":" + adminpw).toString("base64");
+
+        var example_session = {
+            "admin": admin,
+            "dataset": [
+                "test"
+            ],
+            "id": "test",
+            "name": "test",
+            "participants": [
+                presenter
+            ],
+            "presenters": [
+                presenter
+            ]
+        };
+
+        frisby.globalSetup({
+            request: {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': adminauth
+                },
+                inspectOnFailure: true
+            }
+        });
+
+        var path = "/storage/sessions";
+        var request = url + ":" + port.toString() + path;
+        frisby.create("POST " + path + " with valid JSON body as admin should return 201")
+            .post(request, example_session, {json: true})
+            .addHeader("Authorization", adminauth)
+            .timeout(10000)
+            .expectStatus(201)
+            .afterJSON(function(json) {
+                session_id = json.entity.id;
+                done();
+            })
+            .toss();
+    },
+    function(done){
+        var path = "/storage/sessions";
+        var request = url + ":" + port.toString() + path;
+        frisby.create("PUT " + path + "/{sessionID}/presenters with a user added only to presenters should return 400")
+            .put(request + "/" + session_id + "/presenters", [participant], {json: true})
+            .timeout(10000)
+            .expectStatus(400)
+            .after(function(err, res, body){
+                var auth = "Basic " + new Buffer(participant+ ":" + participantpw).toString("base64");
+
+                frisby.globalSetup({
+                    request: {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'Authorization': auth
+                        },
+                        inspectOnFailure: true
+                    }
+                });
+                callStatesAPIForNonParticipants(done);
+            })
+            .toss();
+    },
+    function(done){
+        var auth = "Basic " + new Buffer(presenter + ":" + presenterpw).toString("base64");
+
+        frisby.globalSetup({
+            request: {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': auth
+                },
+                inspectOnFailure: true
+            }
+        });
+        callStatesAPIForPresenters(done);
     }
 ]);
+
+function setParticipantsAndPresenters(participants, presenters, callback){
+    var path = "/storage/sessions";
+    var request = url + ":" + port.toString() + path;
+    frisby.create("PUT" + path + "/{session_id}/participants adding users presenters as admin should return 200")
+        .put(request + "/" + session_id + "/participants", participants, {json: true})
+        .timeout(10000)
+        .expectStatus(200)
+        .after(function(err, res, body){
+            frisby.create("PUT" + path + "/{session_id}/presenters adding users presenters as admin should return 200")
+                .put(request + "/" + session_id + "/presenters", presenters, {json: true})
+                .timeout(10000)
+                .expectStatus(200)
+                .after(function(err, res, body){
+                    callback();
+                })
+                .toss();
+        })
+        .toss();
+}
+
+function callStatesAPIForPresenters(callback){
+    var path = "/V2/storage/states";
+    var request = url + ":" + port.toString() + path;
+    frisby.create("POST " + path + "/{session_id} as presenter should return 200")
+        .post(request + "/" + session_id, sample_state, {json: true})
+        .timeout(10000)
+        .expectStatus(200)
+        .afterJSON(function(json) {
+            state_id = json.entity.id;
+            frisby.create("GET " + path + "/{session_id} as presenter should return 200")
+                .get(request + "/" + session_id)
+                .timeout(10000)
+                .expectStatus(200)
+                .toss();
+            frisby.create("GET " + path + "/{session_id}/latest as presenter should return 200")
+                .get(request + "/" + session_id + "/latest")
+                .timeout(10000)
+                .expectStatus(200)
+                .toss();
+            frisby.create("GET " + path + "/{session_id}/{state_id} as presenter should return 200")
+                .get(request + "/" + session_id + "/" + json.entity.id)
+                .timeout(10000)
+                .expectStatus(200)
+                .toss();
+            frisby.create("PATCH " + path + "/{session_id}/{state_id} as presenter should return 204")
+                .patch(request + "/" + session_id + "/" + json.entity.id, patch, {json: true})
+                .timeout(10000)
+                .expectStatus(204)
+                .toss();
+            frisby.create("PATCH " + path + "/{session_id}/latest as presenter should return 204")
+                .patch(request + "/" + session_id + "/latest", patch, {json: true})
+                .timeout(10000)
+                .expectStatus(204)
+                .toss();
+            callback();
+        })
+        .toss();
+}
+
+function callStatesAPIForParticipants(callback){
+    var path = "/V2/storage/states";
+    var request = url + ":" + port.toString() + path;
+    frisby.create("POST " + path + "/{session_id} as a participant should return 403")
+        .post(request + "/" + session_id, sample_state, {json: true})
+        .timeout(10000)
+        .expectStatus(403)
+        .toss();
+    frisby.create("GET " + path + "/{session_id} as participant should return 200")
+        .get(request + "/" + session_id)
+        .timeout(10000)
+        .expectStatus(200)
+        .toss();
+    frisby.create("GET " + path + "/{session_id}/latest as participant should return 200")
+        .get(request + "/" + session_id + "/latest")
+        .timeout(10000)
+        .expectStatus(200)
+        .toss();
+    frisby.create("GET " + path + "/{session_id}/{state_id} as participant should return 200")
+        .get(request + "/" + session_id + "/" + json.entity.id)
+        .timeout(10000)
+        .expectStatus(200)
+        .toss();
+    frisby.create("PATCH " + path + "/{session_id}/{state_id} as participant should return 403")
+        .patch(request + "/" + session_id + "/" + json.entity.id, patch, {json: true})
+        .timeout(10000)
+        .expectStatus(403)
+        .toss();
+    frisby.create("PATCH " + path + "/{session_id}/latest as participant should return 403")
+        .patch(request + "/" + session_id + "/latest", patch, {json: true})
+        .timeout(10000)
+        .expectStatus(403)
+        .toss();
+    callback();
+}
+
+function callStatesAPIForNonParticipants(callback){
+    var path = "/V2/storage/states";
+    var request = url + ":" + port.toString() + path;
+    frisby.create("POST " + path + "/{session_id} as a non-participant should return 403")
+        .post(request + "/" + session_id, sample_state, {json: true})
+        .timeout(10000)
+        .expectStatus(403)
+        .toss();
+    frisby.create("GET " + path + "/{session_id} as non-participant should return 403")
+        .get(request + "/" + session_id)
+        .timeout(10000)
+        .expectStatus(403)
+        .toss();
+    frisby.create("GET " + path + "/{session_id}/latest as participant should return 403")
+        .get(request + "/" + session_id + "/latest")
+        .timeout(10000)
+        .expectStatus(403)
+        .toss();
+    frisby.create("GET " + path + "/{session_id}/{state_id} as participant should return 403")
+        .get(request + "/" + session_id + "/" + json.entity.id)
+        .timeout(10000)
+        .expectStatus(403)
+        .toss();
+    frisby.create("PATCH " + path + "/{session_id}/{state_id} as participant should return 403")
+        .patch(request + "/" + session_id + "/" + json.entity.id, patch, {json: true})
+        .timeout(10000)
+        .expectStatus(403)
+        .toss();
+    frisby.create("PATCH " + path + "/{session_id}/latest as participant should return 403")
+        .patch(request + "/" + session_id + "/latest", patch, {json: true})
+        .timeout(10000)
+        .expectStatus(403)
+        .toss();
+    callback();
+}

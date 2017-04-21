@@ -209,10 +209,10 @@ async.series([
             .expectStatus(204)
             .toss();
 
-        frisby.create("PATCH " + path + "/{sessionID}/latest with valid session ID and empty patch array should return 204")
+        frisby.create("PATCH " + path + "/{sessionID}/latest with valid session ID and empty patch array should return 400")
             .patch(patchReqLatest, [], {json: true})
             .timeout(10000)
-            .expectStatus(204)
+            .expectStatus(400)
             .toss();
 
         frisby.create("PATCH " + path + "/{sessionID}/latest with valid session ID and patch = empty object {} should return 400")
@@ -292,10 +292,10 @@ async.series([
             .expectStatus(404)
             .toss();
 
-        frisby.create("PATCH " + path + "/{sessionID}/{stateID} with valid session ID, valid stateID, and empty patch array should return 204")
+        frisby.create("PATCH " + path + "/{sessionID}/{stateID} with valid session ID, valid stateID, and empty patch array should return 400")
             .patch(patchReq + state_id, [], {json: true})
             .timeout(10000)
-            .expectStatus(204)
+            .expectStatus(400)
             .toss();
 
         frisby.create("PATCH " + path + "/{sessionID}/{stateID} with invalid session ID, valid stateID, and empty patch array should return 400")
@@ -304,10 +304,10 @@ async.series([
             .expectStatus(400)
             .toss();
 
-        frisby.create("PATCH " + path + "/{sessionID}/{stateID} with valid session ID, invalid stateID, and empty patch array should return 404")
+        frisby.create("PATCH " + path + "/{sessionID}/{stateID} with valid session ID, invalid stateID, and empty patch array should return 400")
             .patch(patchReq + invalid_id, [], {json: true})
             .timeout(10000)
-            .expectStatus(404)
+            .expectStatus(400)
             .toss();
 
         frisby.create("PATCH " + path + "/{sessionID}/{stateID} with invalid session ID, invalid stateID, and empty patch array should return 400")
