@@ -422,17 +422,27 @@ async.series([
             .expectStatus(201)
             .afterJSON(function(json) {
                 session_id = json.entity.id;
-                done();
+                var path = "/V2/storage/states";
+                var request = url + ":" + port.toString() + path;
+                frisby.create("POST " + path + "/{session_id} as presenter should return 200")
+                    .post(request + "/" + session_id, sample_state, {json: true})
+                    .timeout(10000)
+                    .expectStatus(200)
+                    .afterJSON(function(json){
+                        state_id = json.entity.id;
+                        done();
+                    })
+                    .toss();
             })
             .toss();
     },
     function(done){
         var path = "/storage/sessions";
         var request = url + ":" + port.toString() + path;
-        frisby.create("PUT " + path + "/{sessionID}/presenters with a user added only to presenters should return 400")
+        frisby.create("PUT " + path + "/{sessionID}/presenters with a user added only to presenters should return 200")
             .put(request + "/" + session_id + "/presenters", [participant], {json: true})
             .timeout(10000)
-            .expectStatus(400)
+            .expectStatus(200)
             .after(function(err, res, body){
                 var auth = "Basic " + new Buffer(participant+ ":" + participantpw).toString("base64");
 
@@ -483,22 +493,31 @@ async.series([
         var request = url + ":" + port.toString() + path;
         frisby.create("POST " + path + " with valid JSON body as admin should return 201")
             .post(request, example_session, {json: true})
-            .addHeader("Authorization", adminauth)
             .timeout(10000)
             .expectStatus(201)
             .afterJSON(function(json) {
                 session_id = json.entity.id;
-                done();
+                var path = "/V2/storage/states";
+                var request = url + ":" + port.toString() + path;
+                frisby.create("POST " + path + "/{session_id} as presenter should return 200")
+                    .post(request + "/" + session_id, sample_state, {json: true})
+                    .timeout(10000)
+                    .expectStatus(200)
+                    .afterJSON(function(json){
+                        state_id = json.entity.id;
+                        done();
+                    })
+                    .toss();
             })
             .toss();
     },
     function(done){
         var path = "/storage/sessions";
         var request = url + ":" + port.toString() + path;
-        frisby.create("PUT " + path + "/{sessionID}/presenters with a user added only to presenters should return 400")
+        frisby.create("PUT " + path + "/{sessionID}/presenters with a user added only to presenters should return 200")
             .put(request + "/" + session_id + "/presenters", [participant], {json: true})
             .timeout(10000)
-            .expectStatus(400)
+            .expectStatus(200)
             .after(function(err, res, body){
                 var auth = "Basic " + new Buffer(participant+ ":" + participantpw).toString("base64");
 
@@ -529,7 +548,7 @@ async.series([
                 inspectOnFailure: true
             }
         });
-        callStatesAPIForPresenters(done);
+        callStatesAPIForParticipants(done);
     }
 ]);
 
@@ -641,22 +660,22 @@ function callStatesAPIForNonParticipants(callback){
         .timeout(10000)
         .expectStatus(403)
         .toss();
-    frisby.create("GET " + path + "/{session_id}/latest as participant should return 403")
+    frisby.create("GET " + path + "/{session_id}/latest as non-participant should return 403")
         .get(request + "/" + session_id + "/latest")
         .timeout(10000)
         .expectStatus(403)
         .toss();
-    frisby.create("GET " + path + "/{session_id}/{state_id} as participant should return 403")
-        .get(request + "/" + session_id + "/" + json.entity.id)
+    frisby.create("GET " + path + "/{session_id}/{state_id} as non-participant should return 403")
+        .get(request + "/" + session_id + "/" + state_id)
         .timeout(10000)
         .expectStatus(403)
         .toss();
-    frisby.create("PATCH " + path + "/{session_id}/{state_id} as participant should return 403")
-        .patch(request + "/" + session_id + "/" + json.entity.id, patch, {json: true})
+    frisby.create("PATCH " + path + "/{session_id}/{state_id} as non-participant should return 403")
+        .patch(request + "/" + session_id + "/" + state_id, patch, {json: true})
         .timeout(10000)
         .expectStatus(403)
         .toss();
-    frisby.create("PATCH " + path + "/{session_id}/latest as participant should return 403")
+    frisby.create("PATCH " + path + "/{session_id}/latest as non-participant should return 403")
         .patch(request + "/" + session_id + "/latest", patch, {json: true})
         .timeout(10000)
         .expectStatus(403)
